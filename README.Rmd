@@ -1,8 +1,8 @@
 ---
-title: "Estimating confidence intervals"
 output: github_document
 ---
 
+### Confidence intervals of heterogeneity parameters in the "Association Between Administration of IL-6 Antagonists and Mortality Among Patients Hospitalized for COVID-19" article
 #### Arthur M. Albuquerque, Donald R. Williams and James M. Brophy
 #### July 23, 2021
 
@@ -10,7 +10,21 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Load packages
+## Introduction
+
+In this document, we present the estimated confidence intervals of $I^2$ estimates
+derived from the article ["Association Between Administration of IL-6 Antagonists and Mortality Among Patients Hospitalized for COVID-19"](https://jamanetwork.com/journals/jama/fullarticle/2781880).
+
+We fitted random-effect meta-analyses to estimate heterogeneity parameters with
+three different estimators:
+
+* Restricted maximum-likelihood estimator
+* DerSimonian-Laird estimator
+* Hedges estimator
+
+All models were fitted using the R package [metafor](https://wviechtb.github.io/metafor/reference/confint.rma.html). 
+
+#### Load data
 
 ```{r message=FALSE, warning=FALSE}
 # Ensures the package "pacman" is installed
@@ -18,32 +32,17 @@ if (!require("pacman")) install.packages("pacman")
 
 pacman::p_load(rio, # import data
                here, # reproducible file paths
-               tidyverse, # data wrangle
+               dplyr, # to use %>%
                metafor) # fit meta-analyses
-```
 
-Load data
-
-```{r}
 d = import(here("figure1_data.xlsx"))
-```
 
-Calculate effect sizes for each study
-
-```{r}
-
-# Calculate log odds ratio
+# Calculate effect sizes for each study
 d_or = escalc(measure = "OR",
               ai = trt_events, n1i = trt_total,
               ci = control_events, n2i = control_total,
               slab= study,
               data = d)
-
- 
-### fit random-effects model in the each treatment
-fit_toci_reml = rma(yi, vi, subset=(treatment=="tocilizumab"), data=d_or, method = "REML")
-fit_sari_reml = rma(yi, vi, subset=(treatment=="sarilumab"),  data=d_or, method = "REML")
-
 ```
 
 ## Restricted maximum-likelihood estimator
@@ -52,7 +51,7 @@ fit_sari_reml = rma(yi, vi, subset=(treatment=="sarilumab"),  data=d_or, method 
 
 ```{r}
 rma(yi, vi, data=d_or, method = "REML") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
 The estimated $I^2$ was 16.6% (95% confidence interval [CI] 0 - 58.5).
@@ -62,20 +61,20 @@ The estimated $I^2$ was 16.6% (95% confidence interval [CI] 0 - 58.5).
 ```{r}
 rma(yi, vi, data=d_or, subset=(treatment=="tocilizumab"),
     method = "REML") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
-The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 71.2).
+The estimated $I^2$ was 0% (95% CI 0 - 71.2).
 
 #### Sarilumab
 
 ```{r}
 rma(yi, vi, data=d_or, subset=(treatment=="sarilumab"),
     method = "REML") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
-The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 80).
+The estimated $I^2$ was 0% (95% CI 0 - 80.1).
 
 ## DerSimonian-Laird estimator
 
@@ -83,28 +82,59 @@ The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 80).
 
 ```{r}
 rma(yi, vi, data=d_or, method = "DL") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
-The estimated $I^2$ was 1.2% (95% confidence interval [CI] 0 - 58.5).
+The estimated $I^2$ was 1.2% (95% CI 0 - 58.5).
 
 #### Tocilizumab
 
 ```{r}
 rma(yi, vi, data=d_or, subset=(treatment=="tocilizumab"),
     method = "DL") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
-The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 71.2).
+The estimated $I^2$ was 0% (95% CI 0 - 71.2).
 
 #### Sarilumab
 
 ```{r}
 rma(yi, vi, data=d_or, subset=(treatment=="sarilumab"),
     method = "DL") %>% 
-  confint()
+  confint(digits = 1)
 ```
 
-The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 80).
+The estimated $I^2$ was 0% (95% CI 0 - 80.1).
+
+## Hedges estimator
+
+#### Pooled tocilizumab and sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, method = "HE") %>% 
+  confint(digits = 1)
+```
+
+The estimated $I^2$ was 0% (95% CI 0 - 58.5).
+
+#### Tocilizumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="tocilizumab"),
+    method = "HE") %>% 
+  confint(digits = 1)
+```
+
+The estimated $I^2$ was 0% (95% CI 0 - 71.2).
+
+#### Sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="sarilumab"),
+    method = "HE") %>% 
+  confint(digits = 1)
+```
+
+The estimated $I^2$ was 0% (95% CI 0 - 80.1).
 
