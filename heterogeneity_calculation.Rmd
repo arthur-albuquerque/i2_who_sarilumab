@@ -1,0 +1,110 @@
+---
+title: "Estimating confidence intervals"
+output: github_document
+---
+
+#### Arthur M. Albuquerque, Donald R. Williams and James M. Brophy
+#### July 23, 2021
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load packages
+
+```{r message=FALSE, warning=FALSE}
+# Ensures the package "pacman" is installed
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(rio, # import data
+               here, # reproducible file paths
+               tidyverse, # data wrangle
+               metafor) # fit meta-analyses
+```
+
+Load data
+
+```{r}
+d = import(here("figure1_data.xlsx"))
+```
+
+Calculate effect sizes for each study
+
+```{r}
+
+# Calculate log odds ratio
+d_or = escalc(measure = "OR",
+              ai = trt_events, n1i = trt_total,
+              ci = control_events, n2i = control_total,
+              slab= study,
+              data = d)
+
+ 
+### fit random-effects model in the each treatment
+fit_toci_reml = rma(yi, vi, subset=(treatment=="tocilizumab"), data=d_or, method = "REML")
+fit_sari_reml = rma(yi, vi, subset=(treatment=="sarilumab"),  data=d_or, method = "REML")
+
+```
+
+## Restricted maximum-likelihood estimator
+
+#### Pooled tocilizumab and sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, method = "REML") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 16.6% (95% confidence interval [CI] 0 - 58.5).
+
+#### Tocilizumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="tocilizumab"),
+    method = "REML") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 71.2).
+
+#### Sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="sarilumab"),
+    method = "REML") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 80).
+
+## DerSimonian-Laird estimator
+
+#### Pooled tocilizumab and sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, method = "DL") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 1.2% (95% confidence interval [CI] 0 - 58.5).
+
+#### Tocilizumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="tocilizumab"),
+    method = "DL") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 71.2).
+
+#### Sarilumab
+
+```{r}
+rma(yi, vi, data=d_or, subset=(treatment=="sarilumab"),
+    method = "DL") %>% 
+  confint()
+```
+
+The estimated $I^2$ was 0% (95% confidence interval [CI] 0 - 80).
+
